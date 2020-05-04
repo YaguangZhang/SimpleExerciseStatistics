@@ -57,6 +57,22 @@ colorMap = (
     (0.6350, 0.0780, 0.1840)
 )
 
+def getNumsOfRowsAndSets(header, data):
+    totalNumOfRows = len(data)
+    fieldsForSets  = [field for field in header
+        if field.lower().startswith('set')]
+    totalNumOfSets = len(fieldsForSets)
+    return (totalNumOfRows, totalNumOfSets)
+
+def constructTitleFromDate(data, idxRow):
+    """
+    Construct title string from date string (e.g. "4/1/2020").
+    """
+    dateStr = data[idxRow]['Date']
+    (monthStr, dateStr, yearStr) = dateStr.split('/')
+    return "第{}天（{}年{}月{}日）".format(
+        idxRow+1, yearStr, monthStr, dateStr)
+
 def plot3dBarChart(header, data,
     numOfRowsToShow=None, numOfSetsToShowForLastRow=None,
     fontInPlot='Microsoft YaHei', flagShowPlot=False, titleEndPad=0, zTickPad=0,
@@ -68,7 +84,7 @@ def plot3dBarChart(header, data,
     chart plot. The plot will degenerate to a 2-dimensional one if there is only
     one day of data to show.
     """
-    totalNumOfRows = len(data)
+    (totalNumOfRows, totalNumOfSets) = getNumsOfRowsAndSets(header, data)
 
     fieldsForSets  = [field for field in header
         if field.lower().startswith('set')]
@@ -97,10 +113,8 @@ def plot3dBarChart(header, data,
         mpl.rcParams.update({'figure.figsize': figureSize})
 
     # Parse date for file title construction.
-    dateOfInterestStr = data[numOfRowsToShow-1]['Date']
-    (monthStr, dateStr, yearStr) = dateOfInterestStr.split('/')
-    dateStrFormatted = "第{}天（{}年{}月{}日）".format(
-        numOfRowsToShow, yearStr, monthStr, dateStr)
+    dateStrFormatted = constructTitleFromDate(
+        data, numOfRowsToShow-1)
 
     # Store set values in a list, with each element being a list of all set
     # values for a day.
@@ -222,6 +236,113 @@ def plot3dBarChart(header, data,
 
     return (fig, ax)
 
+def plotTrend(header, data, numOfRowsToShow=None,
+    fontInPlot='Microsoft YaHei', flagShowPlot=False,
+    figureSize=None, labelSize='large', titleSize='large', tickSize='large'):
+    """
+    Plot the trends over days of (1) the first-set repetition value and (2) the
+    total repetition value of each day. If numOfRowsToShow is larger than
+    available data, we will predict the values according to the history trends.
+    """
+    (totalNumOfRows, totalNumOfSets) = getNumsOfRowsAndSets(header, data)
+
+    # By default, plot all the data.
+    extraRowsToPredict = 0
+    if numOfRowsToShow is None:
+        numOfRowsToShow = totalNumOfRows
+    elif numOfRowsToShow>totalNumOfRows:
+        extraRowsToPredict = numOfRowsToShow-totalNumOfRows
+        numOfRowsToShow = totalNumOfRows
+
+    # Set font to use in the plot.
+    mpl.rcParams['font.sans-serif'] = [fontInPlot]
+    # Just in case that the minus sign is not displayed correctly.
+    mpl.rcParams['axes.unicode_minus'] = False
+
+    # Set font size.
+    mpl.rcParams.update({
+        'axes.labelsize':  labelSize,
+        'axes.titlesize':  titleSize,
+        'xtick.labelsize': tickSize,
+        'ytick.labelsize': tickSize
+    })
+
+    if figureSize is not None:
+        mpl.rcParams.update({'figure.figsize': figureSize})
+
+    # Parse date for file title construction.
+    dateStrFormatted = constructTitleFromDate(
+        data, numOfRowsToShow-1)
+
+    # Store history data in lists.
+    firstSetReps = [0 for idx in range(numOfRowsToShow)]
+    totalReps = [0 for idx in range(numOfRowsToShow)]
+    # Loop through all days/rows to show.
+    for idxRow in range(numOfRowsToShow):
+        # Obtain all data needed.
+        for idxSet in range(totalNumOfSets):
+            curSetValue = int(data[idxRow]['Set '+str(idxSet+1)])
+            totalReps[idxRow] += curSetValue
+            if idxSet==0:
+                firstSetReps[idxRow] = curSetValue
+
+    xs = [r+1 for r in range(numOfRowsToShow)]
+    # Plot the data we have.
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.plot(xs, totalReps, color=colorMap[0], linestyle='-')
+    ax.plot(xs, firstSetReps, color=colorMap[1], linestyle='--')
+
+    # We expect integer values.
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    # Limit the number of y tick labels.
+    maxNumOfYTickLs = 5
+    curNumOfYTickLs = min(numOfRowsToShow, maxNumOfYTickLs)
+    plt.locator_params(axis='y', nbins=curNumOfYTickLs)
+
+    # Plot the predictions.
+    if extraRowsToPredict>0:
+        (aFirstSet, bFirstSet) = np.polyfit(xs, firstSetReps, 1)
+        (aTotal, bTotal) = np.polyfit(xs, totalReps, 1)
+
+        xsPre = [1, numOfRowsToShow+extraRowsToPredict]
+        firstSetRepsPre = [aFirstSet*x+bFirstSet for x in xsPre]
+        totalRepsPre = [aTotal*x+bTotal for x in xsPre]
+
+        ax.plot(xsPre, firstSetRepsPre, color=colorMap[1],
+            linestyle=':', alpha=0.5)
+        ax.plot(xsPre, totalRepsPre, color=colorMap[0],
+            linestyle='-.', alpha=0.5)
+        # Highlight the end predictions.
+        ax.plot(xsPre[1], firstSetRepsPre[1], color=colorMap[1],
+            Marker='o', alpha=0.5)
+        ax.plot(xsPre[1], totalRepsPre[1], color=colorMap[1],
+            Marker='s', alpha=0.5)
+        ax.text(xsPre[1], firstSetRepsPre[1], str(int(firstSetRepsPre[1])),
+            weight='bold', ha='right', va='center', fontsize=tickSize)
+        ax.text(xsPre[1], totalRepsPre[1], str(int(totalRepsPre[1])),
+            weight='bold', ha='right', va='center', fontsize=tickSize)
+
+    ax.legend(["总计", "首组"])
+    ax.set_title(dateStrFormatted)
+    # Change X and Y ranges.
+    plt.xlim(1, numOfRowsToShow+extraRowsToPredict)
+    ax.set_ylim(bottom=0)
+    # Better grid.
+    ax.grid(True, which='major', color='b', linestyle='-' , alpha=0.5)
+    ax.grid(True, which='minor', color='y', linestyle='--', alpha=0.5)
+    ax.minorticks_on()
+    # Labels.
+    ax.set_xlabel('天数（天）')
+    ax.set_ylabel('完成动作数（个）')
+
+    plt.tight_layout()
+
+    if flagShowPlot:
+        plt.show()
+    return (fig, ax)
+
 if __name__ == '__main__':
     # For testing
     import os
@@ -233,3 +354,7 @@ if __name__ == '__main__':
     plot3dBarChart(header, data, 1, 8, flagShowPlot=True)
     # Test 3D bar chart.
     plot3dBarChart(header, data, 5, 3, flagShowPlot=True)
+    # Test trend plot with available data.
+    plotTrend(header, data, numOfRowsToShow=5, flagShowPlot=True)
+    # Test trend plot with prediction data.
+    plotTrend(header, data, numOfRowsToShow=365, flagShowPlot=True)
