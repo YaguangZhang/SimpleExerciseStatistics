@@ -4,7 +4,8 @@ Helper functions for visualizing exercise statistics.
 Figures generated:
 
     1. One 3D bar chart for each set;
-    2. Trend fit plots over days for first set & sum.
+    2. Trend fit plots over days for first set & sum;
+    3. Workout trend with current average.
 
 Developed and tested with Python 3.8.
 
@@ -348,6 +349,97 @@ def plotTrend(header, data, numOfRowsToShow=None,
         plt.show()
     return (fig, ax)
 
+def plotDailyTimeSpent(header, data, numOfRowsToShow=None,
+    fontInPlot='Microsoft YaHei', flagShowPlot=False, lineWidth=5,
+    figureSize=None, labelSize='large', titleSize='large', tickSize='large'):
+    """
+    Plot the trends over days of (1) the first-set repetition value and (2) the
+    total repetition value of each day. If numOfRowsToShow is larger than
+    available data, we will predict the values according to the history trends.
+    """
+    (totalNumOfRows, totalNumOfSets) = getNumsOfRowsAndSets(header, data)
+
+    # Set font to use in the plot.
+    mpl.rcParams['font.sans-serif'] = [fontInPlot]
+    # Just in case that the minus sign is not displayed correctly.
+    mpl.rcParams['axes.unicode_minus'] = False
+
+    # Set font size.
+    mpl.rcParams.update({
+        'axes.labelsize':  labelSize,
+        'axes.titlesize':  titleSize,
+        'xtick.labelsize': tickSize,
+        'ytick.labelsize': tickSize
+    })
+
+    if figureSize is not None:
+        mpl.rcParams.update({'figure.figsize': figureSize})
+
+    # Parse date for file title construction.
+    dateStrFormatted = constructTitleFromDate(
+        data, numOfRowsToShow-1)
+
+    # Loop through rows of interest to get daily work out time records.
+    workoutTimesInS = [0 for n in range(numOfRowsToShow)]
+    for idxRow in range(numOfRowsToShow):
+        workoutTimeStr = data[idxRow]['WorkoutTime']
+        # Example time string: "0:04:10" for 0 hour 4 minutes 10 seconds.
+        (hStr, mStr, sStr) = workoutTimeStr.split(':')
+        workoutTimesInS[idxRow] = (int(hStr)*60+int(mStr))*60+int(sStr)
+
+    # Average work out time.
+    workoutTimeInSMean = sum(workoutTimesInS)/float(numOfRowsToShow)
+    workoutTimeInMMean = workoutTimeInSMean/float(60)
+
+    workoutTimeMeanStr = str(datetime.timedelta(seconds=int(workoutTimeInSMean)))
+    (hStr, mStr, sStr) = workoutTimeMeanStr.split(':')
+    workoutTimeMeanStr = "日均 "
+    if int(hStr)>0:
+        workoutTimeMeanStr += (hStr+"小时 ")
+    if int(mStr)>0:
+        workoutTimeMeanStr += (mStr+"分 ")
+    if int(sStr)>0:
+        workoutTimeMeanStr += (sStr+"秒")
+
+    xs = [r+1 for r in range(numOfRowsToShow)]
+    # Plot.
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.plot(xs, [t/float(60) for t in workoutTimesInS], color=colorMap[0],
+        linestyle='-', lineWidth=lineWidth)
+    ax.plot([xs[0], xs[-1]], [workoutTimeInMMean]*2, color=colorMap[1],
+        linestyle=':', lineWidth=lineWidth, alpha=0.75)
+    ax.text(xs[-1], workoutTimeInMMean, workoutTimeMeanStr,
+        weight='bold', ha='right', va='top', fontsize=tickSize)
+
+    # We expect integer tick values.
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    # Limit the number of y tick labels.
+    maxNumOfYTickLs = 5
+    curNumOfYTickLs = min(numOfRowsToShow, maxNumOfYTickLs)
+    plt.locator_params(axis='y', nbins=curNumOfYTickLs)
+
+    ax.legend(["每日时长", "平均时长"], loc="lower right",
+        prop={'size': tickSize})
+    ax.set_title(dateStrFormatted)
+    # Change X and Y ranges.
+    plt.xlim(1, numOfRowsToShow)
+    ax.set_ylim(bottom=0)
+    # Better grid.
+    ax.grid(True, which='major', color='b', linestyle='-' , alpha=0.5)
+    ax.grid(True, which='minor', color='y', linestyle='--', alpha=0.5)
+    ax.minorticks_on()
+    # Labels.
+    ax.set_xlabel('天数（天）')
+    ax.set_ylabel('用时（分钟）')
+
+    plt.tight_layout()
+
+    if flagShowPlot:
+        plt.show()
+    return (fig, ax)
+
 if __name__ == '__main__':
     # For testing
     import os
@@ -363,3 +455,5 @@ if __name__ == '__main__':
     plotTrend(header, data, numOfRowsToShow=5, flagShowPlot=True)
     # Test trend plot with prediction data.
     plotTrend(header, data, numOfRowsToShow=365, flagShowPlot=True)
+    # Test workout time trend plot.
+    plotDailyTimeSpent(header, data, numOfRowsToShow=25, flagShowPlot=True)

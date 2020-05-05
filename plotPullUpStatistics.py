@@ -34,6 +34,7 @@ tickSize  = 30
 # Set figure size.
 figureSize = (9,16)
 figureSizeWide = (16,9)
+figureSizeSquare = (9,8)
 
 # Set line width in the trend plot.
 lineWidth = 5
@@ -80,8 +81,26 @@ for idxRow in range(1, 365):
         'trend_day_'+str(idxRow+1)+'.png'))
     plt.close(fig)
 
+# Loop through all days for square trend plots.
+for idxRow in range(1, totalNumOfRows):
+    (fig, _) = es.plotTrend(header, data,  idxRow+1,
+        figureSize=figureSizeSquare, lineWidth=lineWidth, labelSize=labelSize,
+        titleSize=titleSize, tickSize=tickSize, flagShowPlot=False)
+    fig.savefig(
+        os.path.join(outputDir,
+        'trend_square_day_'+str(idxRow+1)+'.png'))
+    plt.close(fig)
+
+    (fig, _) = es.plotDailyTimeSpent(header, data,  idxRow+1,
+        figureSize=figureSizeSquare, lineWidth=lineWidth, labelSize=labelSize,
+        titleSize=titleSize, tickSize=tickSize, flagShowPlot=False)
+    fig.savefig(
+        os.path.join(outputDir,
+        'time_square_day_'+str(idxRow+1)+'.png'))
+    plt.close(fig)
+
 # Loop through future days for wider prediction trend plots.
-for idxRow in range(totalNumOfRows+1, 365):
+for idxRow in range(totalNumOfRows, 365):
     if idxRow<totalNumOfRows:
         lw = lineWidth
     else:
