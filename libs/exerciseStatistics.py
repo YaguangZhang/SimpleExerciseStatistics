@@ -239,7 +239,8 @@ def plot3dBarChart(header, data,
 
 def plotTrend(header, data, numOfRowsToShow=None,
     fontInPlot='Microsoft YaHei', flagShowPlot=False, lineWidth=5,
-    figureSize=None, labelSize='large', titleSize='large', tickSize='large'):
+    figureSize=None, labelSize='large', titleSize='large', tickSize='large',
+    flagEndDateDataInTitle=False):
     """
     Plot the trends over days of (1) the first-set repetition value and (2) the
     total repetition value of each day. If numOfRowsToShow is larger than
@@ -331,7 +332,12 @@ def plotTrend(header, data, numOfRowsToShow=None,
     if extraRowsToPredict>0:
         ax.set_title("第{}天".format(numOfRowsToShow+extraRowsToPredict))
     else:
-        ax.set_title(dateStrFormatted)
+        if flagEndDateDataInTitle:
+            ax.set_title("第{}天".format(numOfRowsToShow) +
+                " 总计{}个".format(totalReps[-1]))
+        else:
+            ax.set_title(dateStrFormatted)
+
     # Change X and Y ranges.
     plt.xlim(1, numOfRowsToShow+extraRowsToPredict)
     ax.set_ylim(bottom=0)
@@ -349,9 +355,24 @@ def plotTrend(header, data, numOfRowsToShow=None,
         plt.show()
     return (fig, ax)
 
+def replaceLeadingZero(str, replacement=' '):
+    newStr = str.lstrip('0')
+    return replacement*(len(str)-len(newStr))+newStr
+
+def getHumanReadableTimeStr(hStr, mStr, sStr):
+    timeStr = ""
+    if int(hStr)>0:
+        timeStr += (replaceLeadingZero(hStr)+"小时")
+    if int(mStr)>0:
+        timeStr += (replaceLeadingZero(mStr)+"分")
+    if int(sStr)>0:
+        timeStr += (replaceLeadingZero(sStr)+"秒")
+    return timeStr
+
 def plotDailyTimeSpent(header, data, numOfRowsToShow=None,
     fontInPlot='Microsoft YaHei', flagShowPlot=False, lineWidth=5,
-    figureSize=None, labelSize='large', titleSize='large', tickSize='large'):
+    figureSize=None, labelSize='large', titleSize='large', tickSize='large',
+    flagEndDateDataInTitle=False):
     """
     Plot the trends over days of (1) the first-set repetition value and (2) the
     total repetition value of each day. If numOfRowsToShow is larger than
@@ -394,12 +415,7 @@ def plotDailyTimeSpent(header, data, numOfRowsToShow=None,
     workoutTimeMeanStr = str(datetime.timedelta(seconds=int(workoutTimeInSMean)))
     (hStr, mStr, sStr) = workoutTimeMeanStr.split(':')
     workoutTimeMeanStr = "日均 "
-    if int(hStr)>0:
-        workoutTimeMeanStr += (hStr+"小时 ")
-    if int(mStr)>0:
-        workoutTimeMeanStr += (mStr+"分 ")
-    if int(sStr)>0:
-        workoutTimeMeanStr += (sStr+"秒")
+    workoutTimeMeanStr += getHumanReadableTimeStr(hStr, mStr, sStr)
 
     xs = [r+1 for r in range(numOfRowsToShow)]
     # Plot.
@@ -422,7 +438,14 @@ def plotDailyTimeSpent(header, data, numOfRowsToShow=None,
 
     ax.legend(["每日时长", "平均时长"], loc="lower right",
         prop={'size': tickSize})
-    ax.set_title(dateStrFormatted)
+    if flagEndDateDataInTitle:
+        latestWorkoutTimeStr = str(datetime.timedelta(seconds=int(workoutTimesInS[-1])))
+        (hStr, mStr, sStr) = latestWorkoutTimeStr.split(':')
+        ax.set_title("第{}天 耗时".format(numOfRowsToShow) +
+            getHumanReadableTimeStr(hStr, mStr, sStr))
+    else:
+        ax.set_title(dateStrFormatted)
+
     # Change X and Y ranges.
     plt.xlim(1, numOfRowsToShow)
     ax.set_ylim(bottom=0)
@@ -456,4 +479,5 @@ if __name__ == '__main__':
     # Test trend plot with prediction data.
     plotTrend(header, data, numOfRowsToShow=365, flagShowPlot=True)
     # Test workout time trend plot.
-    plotDailyTimeSpent(header, data, numOfRowsToShow=25, flagShowPlot=True)
+    plotDailyTimeSpent(header, data, numOfRowsToShow=25,
+        flagEndDateDataInTitle=True, flagShowPlot=True)

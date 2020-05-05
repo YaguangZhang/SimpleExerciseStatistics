@@ -85,7 +85,8 @@ for idxRow in range(1, 365):
 for idxRow in range(1, totalNumOfRows):
     (fig, _) = es.plotTrend(header, data,  idxRow+1,
         figureSize=figureSizeSquare, lineWidth=lineWidth, labelSize=labelSize,
-        titleSize=titleSize, tickSize=tickSize, flagShowPlot=False)
+        titleSize=titleSize, tickSize=tickSize, flagShowPlot=False,
+        flagEndDateDataInTitle=True)
     fig.savefig(
         os.path.join(outputDir,
         'trend_square_day_'+str(idxRow+1)+'.png'))
@@ -93,7 +94,8 @@ for idxRow in range(1, totalNumOfRows):
 
     (fig, _) = es.plotDailyTimeSpent(header, data,  idxRow+1,
         figureSize=figureSizeSquare, lineWidth=lineWidth, labelSize=labelSize,
-        titleSize=titleSize, tickSize=tickSize, flagShowPlot=False)
+        titleSize=titleSize, tickSize=tickSize, flagShowPlot=False,
+        flagEndDateDataInTitle=True)
     fig.savefig(
         os.path.join(outputDir,
         'time_square_day_'+str(idxRow+1)+'.png'))
