@@ -237,7 +237,7 @@ def plot3dBarChart(header, data,
     return (fig, ax)
 
 def plotTrend(header, data, numOfRowsToShow=None,
-    fontInPlot='Microsoft YaHei', flagShowPlot=False,
+    fontInPlot='Microsoft YaHei', flagShowPlot=False, lineWidth=5,
     figureSize=None, labelSize='large', titleSize='large', tickSize='large'):
     """
     Plot the trends over days of (1) the first-set repetition value and (2) the
@@ -290,8 +290,10 @@ def plotTrend(header, data, numOfRowsToShow=None,
     # Plot the data we have.
     fig = plt.figure()
     ax = fig.gca()
-    ax.plot(xs, totalReps, color=colorMap[0], linestyle='-')
-    ax.plot(xs, firstSetReps, color=colorMap[1], linestyle='--')
+    ax.plot(xs, totalReps, color=colorMap[0],
+        linestyle='-', lineWidth=lineWidth)
+    ax.plot(xs, firstSetReps, color=colorMap[1],
+        linestyle='--', lineWidth=lineWidth)
 
     # We expect integer values.
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -311,9 +313,9 @@ def plotTrend(header, data, numOfRowsToShow=None,
         totalRepsPre = [aTotal*x+bTotal for x in xsPre]
 
         ax.plot(xsPre, firstSetRepsPre, color=colorMap[1],
-            linestyle=':', alpha=0.5)
+            linestyle=':', alpha=0.5, lineWidth=lineWidth)
         ax.plot(xsPre, totalRepsPre, color=colorMap[0],
-            linestyle='-.', alpha=0.5)
+            linestyle='-.', alpha=0.5, lineWidth=lineWidth)
         # Highlight the end predictions.
         ax.plot(xsPre[1], firstSetRepsPre[1], color=colorMap[1],
             Marker='o', alpha=0.5)
@@ -324,8 +326,11 @@ def plotTrend(header, data, numOfRowsToShow=None,
         ax.text(xsPre[1], totalRepsPre[1], str(int(totalRepsPre[1])),
             weight='bold', ha='right', va='center', fontsize=tickSize)
 
-    ax.legend(["总计", "首组"])
-    ax.set_title(dateStrFormatted)
+    ax.legend(["总计", "首组"], prop={'size': tickSize})
+    if extraRowsToPredict>0:
+        ax.set_title("第{}天".format(numOfRowsToShow+extraRowsToPredict))
+    else:
+        ax.set_title(dateStrFormatted)
     # Change X and Y ranges.
     plt.xlim(1, numOfRowsToShow+extraRowsToPredict)
     ax.set_ylim(bottom=0)
