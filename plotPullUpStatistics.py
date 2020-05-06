@@ -114,3 +114,17 @@ for idxRow in range(totalNumOfRows, 365):
         os.path.join(outputDir,
         'trend_wide_day_'+str(idxRow+1)+'.png'))
     plt.close(fig)
+
+# Wide version for the data available.
+for idxRow in range(totalNumOfRows):
+    if idxRow<totalNumOfRows:
+        lw = lineWidth
+    else:
+        lw = lineWidthPre
+    (fig, _) = es.plotTrend(header, data,  idxRow+1,
+        figureSize=figureSizeWide, lineWidth=lw, labelSize=labelSize,
+        titleSize=titleSize, tickSize=tickSize, flagShowPlot=False)
+    fig.savefig(
+        os.path.join(outputDir,
+        'trend_available_wide_day_'+str(idxRow+1)+'.png'))
+    plt.close(fig)
