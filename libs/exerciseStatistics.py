@@ -240,7 +240,7 @@ def plot3dBarChart(header, data,
 def plotTrend(header, data, numOfRowsToShow=None,
     fontInPlot='Microsoft YaHei', flagShowPlot=False, lineWidth=5,
     figureSize=None, labelSize='large', titleSize='large', tickSize='large',
-    flagEndDateDataInTitle=False):
+    flagEndDateDataInTitle=False, inFigTextSize='large'):
     """
     Plot the trends over days of (1) the first-set repetition value and (2) the
     total repetition value of each day. If numOfRowsToShow is larger than
@@ -324,9 +324,9 @@ def plotTrend(header, data, numOfRowsToShow=None,
         ax.plot(xsPre[1], totalRepsPre[1], color=colorMap[1],
             Marker='s', alpha=0.5)
         ax.text(xsPre[1], firstSetRepsPre[1], str(int(firstSetRepsPre[1])),
-            weight='bold', ha='right', va='center', fontsize=tickSize)
+            weight='bold', ha='right', va='center', fontsize=inFigTextSize)
         ax.text(xsPre[1], totalRepsPre[1], str(int(totalRepsPre[1])),
-            weight='bold', ha='right', va='center', fontsize=tickSize)
+            weight='bold', ha='right', va='center', fontsize=inFigTextSize)
 
     ax.legend(["总计", "首组"], prop={'size': tickSize})
     if extraRowsToPredict>0:

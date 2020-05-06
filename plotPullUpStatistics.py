@@ -30,6 +30,7 @@ totalNumOfSets = len(fieldsForSets)
 labelSize = 30
 titleSize = 40
 tickSize  = 30
+inFigTextSize = 100
 
 # Set figure size.
 figureSize = (9,16)
@@ -109,7 +110,8 @@ for idxRow in range(totalNumOfRows, 365):
         lw = lineWidthPre
     (fig, _) = es.plotTrend(header, data,  idxRow+1,
         figureSize=figureSizeWide, lineWidth=lw, labelSize=labelSize,
-        titleSize=titleSize, tickSize=tickSize, flagShowPlot=False)
+        titleSize=titleSize, tickSize=tickSize, flagShowPlot=False,
+        inFigTextSize=inFigTextSize)
     fig.savefig(
         os.path.join(outputDir,
         'trend_wide_day_'+str(idxRow+1)+'.png'))
